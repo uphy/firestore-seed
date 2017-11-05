@@ -8,6 +8,14 @@
   },
   "author": "uphy",
   "homepage": "https://github.com/uphy/firestore-seed",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/uphy/firestore-seed.git"
+  },
+  "bugs": {
+    "url": "https://github.com/uphy/firestore-seed/issues",
+    "email": "yuhi.ishikura@gmail.com"
+  },
   "license": "Apache-2.0",
   "dependencies": {
     "@types/google-cloud__storage": "^1.1.6",
