@@ -1,0 +1,13 @@
+{
+  "name": "geopoint",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "uphy",
+  "license": "Apache-2.0",
+  "scripts": {
+    "exec": "node index.js"
+  },
+  "dependencies": {
+    "firestore-seed": "^0.0.1"
+  }
+}

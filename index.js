@@ -130,6 +130,13 @@ class ImageOptions {
     }
 }
 
+class GeoPoint {
+    constructor(latitude, longitude) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
+}
+
 class Document {
     constructor(id, data) {
         if (id == null) {
@@ -197,6 +204,8 @@ class Collection {
                     let subcollection = new Collection(o.name, o.docs, subcollectionRef);
                     filteredObject = DELETE;
                     context.postDocActions.push(() => subcollection.importDocuments(admin));
+                } else if (o instanceof GeoPoint) {
+                    filteredObject = new admin.firestore.GeoPoint(o.latitude, o.longitude);
                 } else if (o instanceof Date) {
                     filteredObject = o;
                 } else if (o instanceof Array || o instanceof Object) {
@@ -264,6 +273,9 @@ module.exports = {
     },
     imageOptions(localDir, remoteDir) {
         return new ImageOptions(localDir, remoteDir);
+    },
+    geoPoint(latitude, longitude) {
+        return new GeoPoint(latitude, longitude);
     },
     collection(name, docs) {
         return new Collection(name, docs);
