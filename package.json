@@ -1,6 +1,6 @@
 {
   "name": "firestore-seed",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Insert seed data to your Cloud Firestore database.\nAlso supports uploading files linked from the Firestore documents.",
   "main": "index.js",
   "scripts": {
@@ -18,8 +18,8 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@types/google-cloud__storage": "^1.1.6",
-    "firebase-admin": "^5.4.3",
+    "@types/google-cloud__storage": "^1.7.2",
+    "firebase-admin": "^6.4.0",
     "node-uuid": "^1.4.8"
   }
 }

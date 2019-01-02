@@ -207,6 +207,8 @@ class Collection {
                 } else if (o instanceof GeoPoint) {
                     filteredObject = new admin.firestore.GeoPoint(o.latitude, o.longitude);
                 } else if (o instanceof Date) {
+                    filteredObject = admin.firestore.Timestamp.fromDate(o);
+                } else if (o instanceof admin.firestore.Timestamp) {
                     filteredObject = o;
                 } else if (o instanceof Array || o instanceof Object) {
                     filteredObject = o instanceof Array ? Array(o.length) : {};
