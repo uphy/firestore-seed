@@ -6,8 +6,8 @@ const seed = require('firestore-seed');
 admin.initializeApp(config);
 
 // Import seeds.
-let imageOptions = seed.imageOptions("images/{id}", "public/profiles/{id}")
-let messagesCollection = seed.collection("profiles", [
+const imageOptions = seed.imageOptions("images/{id}", "public/profiles/{id}")
+const messagesCollection = seed.collection("profiles", [
     seed.doc("uphy", {
         name: "foo",
         introduction: "Hello, I'm foo.",

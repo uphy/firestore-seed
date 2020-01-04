@@ -96,8 +96,8 @@ function uploadFile(bucket: Bucket, file: string, destination: string, force?: b
 }
 
 class ImageSeed {
-    public downloadURL: string | null
-    constructor(public localPath: string, public remotePath: string, imageOptions: ImageOptions) {
+    private downloadURL: string | null
+    constructor(private localPath: string, private remotePath: string, imageOptions: ImageOptions) {
         this.localPath = localPath;
         this.remotePath = remotePath;
         this.downloadURL = null;
@@ -138,15 +138,7 @@ class GeoPointSeed {
 }
 
 class DocumentSeed {
-    public id: string;
-    public data: any;
-    constructor(id: string, data: any) {
-        if (id == null) {
-            throw new Error("id==null");
-        }
-        this.id = id;
-        this.data = data;
-    }
+    constructor(public id: string, public data: any) { }
 }
 
 class DocumentRefSeed {
@@ -167,7 +159,13 @@ class Context {
 interface AdminLike {
 
     firestore(): Firestore
-    storage(): Storage
+    storage(): StorageLike
+
+}
+
+interface StorageLike {
+
+    bucket(): Bucket
 
 }
 
@@ -175,13 +173,13 @@ class CollectionSeed {
 
     constructor(public docs: DocumentSeed[], private collectionProvider: (firestore: Firestore) => admin.firestore.CollectionReference) { }
 
-    getCollection(firestore: Firestore): admin.firestore.CollectionReference {
+    private getCollection(firestore: Firestore): admin.firestore.CollectionReference {
         return this.collectionProvider(firestore);
     }
 
-    importDocuments(admin: AdminLike) {
-        let self = this;
-        let firestore = admin.firestore();
+    public importDocuments(admin: AdminLike) {
+        const self = this;
+        const firestore = admin.firestore();
         function filterDocument(context: Context): Promise<DocumentSeed> {
             function filterObject(context: Context, key: string | null, o: any): Promise<any> {
                 let parentDocID = context.doc.id;

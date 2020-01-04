@@ -1,6 +1,6 @@
-const admin = require("firebase-admin");
-const config = require("../firebase-admin-config.js");
-const seed = require('firestore-seed');
+import * as admin from "firebase-admin";
+import config from "../firebase-admin-config.js";
+import * as seed from 'firestore-seed';
 
 // Initialize firebase-admin with the imported configuration.
 admin.initializeApp(config);
@@ -19,6 +19,6 @@ const messagesCollection = seed.collection("messages", [
 
 messagesCollection.importDocuments(admin).then(() => {
     console.log("Successfully imported documents.");
-}).catch(e => {
+}).catch((e: any) => {
     console.log("Failed to import documents: " + e);
 });

@@ -6,7 +6,7 @@ const seed = require('firestore-seed');
 admin.initializeApp(config);
 
 // Import seeds.
-let messagesCollection = seed.collection("messages", [
+const messagesCollection = seed.collection("messages", [
     seed.doc("message1", {
         content: "Hello firestore-seed.",
         created: new Date(),

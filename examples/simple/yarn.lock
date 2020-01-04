@@ -498,10 +498,10 @@ firebase-admin@^8.9.0:
     "@google-cloud/firestore" "^3.0.0"
     "@google-cloud/storage" "^4.1.2"
 
-firestore-seed@^0.0.8:
-  version "0.0.8"
-  resolved "https://registry.yarnpkg.com/firestore-seed/-/firestore-seed-0.0.8.tgz#0cec74a8584c8e7968208dc89082b80bbab606b9"
-  integrity sha512-xAy6Qj75DEe/S3R9zQKRQj99ZL2e+FVxiF+672c0S+szCnRRNs6SmFn3Xz5JtB1hzhCMs7TnVnMwAf5rSjZWtw==
+firestore-seed@^0.0.9:
+  version "0.0.9"
+  resolved "https://registry.yarnpkg.com/firestore-seed/-/firestore-seed-0.0.9.tgz#b29d55b5a19d7a7efc758ec6b49b529ee12c1fa9"
+  integrity sha512-KTxoEr8PCJZFxIc5O0mykiaGMKcHEwCl8+ab7ASDZaDmFYAbeug4cJydH2PBg8eIfqufX2jslhsf8OZnGEmz/g==
   dependencies:
     firebase-admin "^8.9.0"
     uuid "^3.3.3"
