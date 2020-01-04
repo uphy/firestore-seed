@@ -8,6 +8,6 @@
     "exec": "node index.js"
   },
   "dependencies": {
-    "firestore-seed": "^0.0.8"
+    "firestore-seed": "^0.0.9"
   }
 }

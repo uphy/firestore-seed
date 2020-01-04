@@ -1,6 +1,6 @@
 {
   "name": "firestore-seed",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Insert seed data to your Cloud Firestore database.\nAlso supports uploading files linked from the Firestore documents.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

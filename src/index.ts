@@ -6,7 +6,6 @@ import { Bucket } from '@google-cloud/storage';
 import { Firestore, DocumentReference, Timestamp, GeoPoint } from '@google-cloud/firestore';
 import { MetadataResponse, Metadata } from '@google-cloud/common';
 
-
 function fileExist(file: fs.PathLike): boolean {
     try {
         fs.statSync(file);
@@ -129,8 +128,9 @@ class ImageSeed {
     }
 }
 
-class ImageOptions {
-    constructor(public localDir: string, public remoteDir: string) { }
+interface ImageOptions {
+    localDir: string;
+    remoteDir: string;
 }
 
 class GeoPointSeed {
@@ -149,11 +149,11 @@ class DocumentSeed {
     }
 }
 
-class DocumentRef {
+class DocumentRefSeed {
     constructor(public collection: string, public document: string) { }
 }
 
-class Subcollection {
+class SubcollectionSeed {
     constructor(public docs: DocumentSeed[]) { }
 }
 
@@ -192,14 +192,14 @@ class CollectionSeed {
                     p.push(o.upload(bucket, parentDocID).then(url => {
                         filteredObject = url;
                     }));
-                } else if (o instanceof DocumentRef) {
+                } else if (o instanceof DocumentRefSeed) {
                     filteredObject = firestore.collection(o.collection).doc(o.document);
-                } else if (o instanceof Subcollection) {
+                } else if (o instanceof SubcollectionSeed) {
                     const subcollectionRef = self.getCollection(firestore).doc(context.doc.id).collection(key!);
                     const subcollection = new CollectionSeed(o.docs, () => subcollectionRef);
                     filteredObject = DELETE;
                     context.postDocActions.push(() => subcollection.importDocuments(admin));
-                } else if (o instanceof GeoPoint) {
+                } else if (o instanceof GeoPointSeed) {
                     filteredObject = new GeoPoint(o.latitude, o.longitude);
                 } else if (o instanceof Date) {
                     filteredObject = Timestamp.fromDate(o);
@@ -250,13 +250,24 @@ class CollectionSeed {
     }
 }
 
-
-module.exports = {
+export = {
+    /**
+     * Create document.
+     *
+     * @param id document id.
+     * @param data document data.
+     */
     doc(id: string, data: any) {
         return new DocumentSeed(id, data);
     },
-    docRef(collection: string, document: string | null) {
-        if (document == null) {
+    /**
+     * Create document reference.
+     *
+     * @param collection collection path
+     * @param document document id.  if omitted, the last path component of the '/' separated path will be used.
+     */
+    docRef(collection: string, document?: string | null) {
+        if (document === undefined || document === null) {
             let s = collection.split("/")
             if (s.length != 2) {
                 throw new Error("unsupported format collection: " + collection);
@@ -264,13 +275,26 @@ module.exports = {
             collection = s[0];
             document = s[1];
         }
-        return new DocumentRef(collection, document);
+        return new DocumentRefSeed(collection, document);
     },
+    /**
+     * Create image.  The image file will be upload to Cloud Storage.
+     *
+     * @param localPath file to upload.  relative path from {@link ImageOptions#localDir}.
+     * @param remotePath upload path on CloudStorage. relative path from {@link ImageOptions#remoteDir}
+     * @param imageOptions options
+     */
     image(localPath: string, remotePath: string, imageOptions: ImageOptions) {
         return new ImageSeed(localPath, remotePath, imageOptions);
     },
-    imageOptions(localDir: string, remoteDir: string) {
-        return new ImageOptions(localDir, remoteDir);
+    /**
+     * for compatibility.
+     *
+     * You don't need to use this method.
+     * You can simply pass plain javascript object to image() method.
+     */
+    imageOptions(localDir: string, remoteDir: string): ImageOptions {
+        return { localDir, remoteDir };
     },
     geoPoint(latitude: number, longitude: number) {
         return new GeoPointSeed(latitude, longitude);
@@ -279,7 +303,7 @@ module.exports = {
         return new CollectionSeed(docs, (firestore: Firestore) => firestore.collection(name));
     },
     subcollection(docs: DocumentSeed[]) {
-        return new Subcollection(docs);
+        return new SubcollectionSeed(docs);
     },
     importCollections(admin: any, collections: CollectionSeed[]) {
         return Promise.all(collections.map(collection => collection.importDocuments(admin)));
