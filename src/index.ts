@@ -1,8 +1,13 @@
-const fs = require('fs');
-const path = require('path');
-const uuid = require('node-uuid');
+import fs = require('fs');
+import path = require('path');
+import uuid = require('uuid');
+import * as admin from 'firebase-admin';
+import { Bucket } from '@google-cloud/storage';
+import { Firestore, DocumentReference, Timestamp, GeoPoint } from '@google-cloud/firestore';
+import { MetadataResponse, Metadata } from '@google-cloud/common';
 
-function fileExist(file) {
+
+function fileExist(file: fs.PathLike): boolean {
     try {
         fs.statSync(file);
         return true;
@@ -19,7 +24,7 @@ function fileExist(file) {
  * @param {boolean} force if true, upload even if the file exists
  * @return {Promise.<string>} download url for the file
  */
-function uploadFile(bucket, file, destination, force) {
+function uploadFile(bucket: Bucket, file: string, destination: string, force?: boolean): Promise<string> {
     if (destination.startsWith("/")) {
         destination = destination.substring(1);
     }
@@ -49,19 +54,19 @@ function uploadFile(bucket, file, destination, force) {
                 resolve(null);
             }
         })
-    }).then(() => {
+    }).then((): Promise<MetadataResponse> => {
         // get metadata
         return new Promise((resolve, reject) => {
-            bucket.file(destination).getMetadata().then(metadata => {
+            bucket.file(destination).getMetadata().then((metadata: MetadataResponse) => {
                 resolve(metadata[0]);
             }).catch(e => {
                 reject(e);
             })
         })
-    }).then(metadata => {
+    }).then((metadata: Metadata): Promise<string> => {
         // update "firebaseStorageDownloadTokens" metadata
         return new Promise((resolve, reject) => {
-            var token;
+            var token: string;
             if (metadata && metadata["firebaseStorageDownloadTokens"]) {
                 token = metadata["firebaseStorageDownloadTokens"];
                 resolve(token);
@@ -76,7 +81,7 @@ function uploadFile(bucket, file, destination, force) {
                 });
             }
         });
-    }).then(token => {
+    }).then((token: string) => {
         // generate download url
         //var url = "https://firebasestorage.googleapis.com/v0/b/fuzoroinomori-4b4d1.appspot.com/o/public%2Fitems%2F59qsMV4SzaACDNT2Kx85.jpg?alt=media&token=7f4f487a-c24c-4d70-b5ab-f01ddf34cf75"
         var url = "https://firebasestorage.googleapis.com/v0/b/"
@@ -91,8 +96,9 @@ function uploadFile(bucket, file, destination, force) {
     });
 }
 
-class Image {
-    constructor(localPath, remotePath, imageOptions) {
+class ImageSeed {
+    public downloadURL: string | null
+    constructor(public localPath: string, public remotePath: string, imageOptions: ImageOptions) {
         this.localPath = localPath;
         this.remotePath = remotePath;
         this.downloadURL = null;
@@ -101,7 +107,7 @@ class Image {
             this.remotePath = path.join(imageOptions.remoteDir, remotePath);
         }
     }
-    upload(bucket, docId) {
+    upload(bucket: Bucket, docId: string) {
         return new Promise((resolve, reject) => {
             if (this.downloadURL != null) {
                 resolve(this.downloadURL);
@@ -124,21 +130,17 @@ class Image {
 }
 
 class ImageOptions {
-    constructor(localDir, remoteDir) {
-        this.localDir = localDir;
-        this.remoteDir = remoteDir;
-    }
+    constructor(public localDir: string, public remoteDir: string) { }
 }
 
-class GeoPoint {
-    constructor(latitude, longitude) {
-        this.latitude = latitude;
-        this.longitude = longitude;
-    }
+class GeoPointSeed {
+    constructor(public latitude: number, public longitude: number) { }
 }
 
-class Document {
-    constructor(id, data) {
+class DocumentSeed {
+    public id: string;
+    public data: any;
+    constructor(id: string, data: any) {
         if (id == null) {
             throw new Error("id==null");
         }
@@ -148,51 +150,44 @@ class Document {
 }
 
 class DocumentRef {
-    constructor(collection, document) {
-        this.collection = collection;
-        this.document = document;
-    }
+    constructor(public collection: string, public document: string) { }
 }
 
 class Subcollection {
-    constructor(docs) {
-        this.docs = docs;
-    }
+    constructor(public docs: DocumentSeed[]) { }
 }
 
 const DELETE = "__delete__";
 
 class Context {
-    constructor(doc, docRef) {
-        this.postDocActions = [];
-        this.doc = doc;
-        this.docRef = docRef;
-    }
+    public postDocActions: (() => Promise<any>)[] = []
+    constructor(public doc: DocumentSeed, public docRef: DocumentReference) { }
 }
 
-class Collection {
-    constructor(name, docs, collection) {
-        this.name = name;
-        this.docs = docs;
-        this.collection = collection;
+interface AdminLike {
+
+    firestore(): Firestore
+    storage(): Storage
+
+}
+
+class CollectionSeed {
+
+    constructor(public docs: DocumentSeed[], private collectionProvider: (firestore: Firestore) => admin.firestore.CollectionReference) { }
+
+    getCollection(firestore: Firestore): admin.firestore.CollectionReference {
+        return this.collectionProvider(firestore);
     }
-    getCollection(firestore) {
-        if (this.collection == null) {
-            // root
-            return firestore.collection(this.name);
-        } else {
-            return this.collection;
-        }
-    }
-    importDocuments(admin) {
+
+    importDocuments(admin: AdminLike) {
         let self = this;
         let firestore = admin.firestore();
-        function filterDocument(context) {
-            function filterObject(context, key, o) {
+        function filterDocument(context: Context): Promise<DocumentSeed> {
+            function filterObject(context: Context, key: string | null, o: any): Promise<any> {
                 let parentDocID = context.doc.id;
                 var p = [];
                 var filteredObject = o;
-                if (o instanceof Image) {
+                if (o instanceof ImageSeed) {
                     var bucket = admin.storage().bucket();
                     p.push(o.upload(bucket, parentDocID).then(url => {
                         filteredObject = url;
@@ -200,15 +195,15 @@ class Collection {
                 } else if (o instanceof DocumentRef) {
                     filteredObject = firestore.collection(o.collection).doc(o.document);
                 } else if (o instanceof Subcollection) {
-                    let subcollectionRef = self.getCollection(firestore).doc(context.doc.id).collection(key);
-                    let subcollection = new Collection(o.name, o.docs, subcollectionRef);
+                    const subcollectionRef = self.getCollection(firestore).doc(context.doc.id).collection(key!);
+                    const subcollection = new CollectionSeed(o.docs, () => subcollectionRef);
                     filteredObject = DELETE;
                     context.postDocActions.push(() => subcollection.importDocuments(admin));
                 } else if (o instanceof GeoPoint) {
-                    filteredObject = new admin.firestore.GeoPoint(o.latitude, o.longitude);
+                    filteredObject = new GeoPoint(o.latitude, o.longitude);
                 } else if (o instanceof Date) {
-                    filteredObject = admin.firestore.Timestamp.fromDate(o);
-                } else if (o instanceof admin.firestore.Timestamp) {
+                    filteredObject = Timestamp.fromDate(o);
+                } else if (o instanceof Timestamp) {
                     filteredObject = o;
                 } else if (o instanceof Array || o instanceof Object) {
                     filteredObject = o instanceof Array ? Array(o.length) : {};
@@ -230,20 +225,20 @@ class Collection {
                 let doc = context.doc;
                 let id = doc.id;
                 return filterObject(context, null, doc.data).then(filteredData => {
-                    resolve(new Document(id, filteredData));
+                    resolve(new DocumentSeed(id, filteredData));
                 }).catch(e => {
                     reject(e);
                 });
             });
         }
-        let p = [];
+        const p: Promise<any>[] = [];
         let collection = this.getCollection(firestore);
         this.docs.forEach(d => {
             let docRef = collection.doc(d.id);
             let context = new Context(d, docRef);
             p.push(filterDocument(context).then(filteredDoc => {
                 return docRef.set(filteredDoc.data).then(() => {
-                    let postDocResults = [];
+                    let postDocResults: Promise<any>[] = [];
                     context.postDocActions.forEach(postDocAction => {
                         postDocResults.push(postDocAction());
                     });
@@ -255,11 +250,12 @@ class Collection {
     }
 }
 
+
 module.exports = {
-    doc(id, data) {
-        return new Document(id, data);
+    doc(id: string, data: any) {
+        return new DocumentSeed(id, data);
     },
-    docRef(collection, document) {
+    docRef(collection: string, document: string | null) {
         if (document == null) {
             let s = collection.split("/")
             if (s.length != 2) {
@@ -270,22 +266,22 @@ module.exports = {
         }
         return new DocumentRef(collection, document);
     },
-    image(localPath, remotePath, imageOptions) {
-        return new Image(localPath, remotePath, imageOptions);
+    image(localPath: string, remotePath: string, imageOptions: ImageOptions) {
+        return new ImageSeed(localPath, remotePath, imageOptions);
     },
-    imageOptions(localDir, remoteDir) {
+    imageOptions(localDir: string, remoteDir: string) {
         return new ImageOptions(localDir, remoteDir);
     },
-    geoPoint(latitude, longitude) {
-        return new GeoPoint(latitude, longitude);
+    geoPoint(latitude: number, longitude: number) {
+        return new GeoPointSeed(latitude, longitude);
     },
-    collection(name, docs) {
-        return new Collection(name, docs);
+    collection(name: string, docs: DocumentSeed[]) {
+        return new CollectionSeed(docs, (firestore: Firestore) => firestore.collection(name));
     },
-    subcollection(docs) {
+    subcollection(docs: DocumentSeed[]) {
         return new Subcollection(docs);
     },
-    importCollections(admin, collections) {
+    importCollections(admin: any, collections: CollectionSeed[]) {
         return Promise.all(collections.map(collection => collection.importDocuments(admin)));
     }
 };
