@@ -8,7 +8,7 @@
     },
     "dependencies": {},
     "devDependencies": {
-        "firestore-seed": "^0.0.10"
+        "firestore-seed": "^0.0.11"
     },
     "firestore-seed": {
         "databaseURL": "https://xxxxxxx.firebaseio.com",
