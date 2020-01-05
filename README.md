@@ -186,3 +186,42 @@ seed.importCollections(admin,
     console.log("Failed to import documents: " + e);
 });
 ```
+
+## Predefined script
+
+You can use firestore-seed more simply with npm scripts.
+
+1. `yarn add -D firestore-seed`
+2. Create seed file
+   ```javascript
+   const seed = require('firestore-seed');
+
+   // Export collection or collection array.
+   module.exports = seed.collection("messages", [
+       seed.doc("message1", {
+           content: "Hello firestore-seed.",
+           created: new Date(),
+       }),
+       seed.doc("message2", {
+           content: "Good bye firestore-seed.",
+           created: new Date(),
+       })
+   ]);
+   ```
+3. Add following properties to your `package.json`
+   ```json
+   "scripts": {
+       "seed": "firestore-seed",
+       /* ... */
+   },
+   /* ... */
+   "firestore-seed": {
+       /* Firestore database URL(required) */
+       "databaseURL": "https://xxxxxxx.firebaseio.com",
+       /* Firebase service account key file. */
+       "credentialPath": "./firebase-credential.json",
+       /* Firestore seed file created in #2 */
+       "seedDataPath": "./firestore-seed.js"
+   }
+   ```
+4. Run `yarn seed`

@@ -1,15 +1,20 @@
 {
   "name": "firestore-seed",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Insert seed data to your Cloud Firestore database.\nAlso supports uploading files linked from the Firestore documents.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
+    "watch": "tsc -w",
     "prepublishOnly": "tsc"
   },
+  "bin": {
+    "firestore-seed": "./bin/firestore-seed"
+  },
   "files": [
-    "dist"
+    "dist",
+    "bin"
   ],
   "author": "uphy",
   "homepage": "https://github.com/uphy/firestore-seed",

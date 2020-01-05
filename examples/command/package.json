@@ -1,0 +1,18 @@
+{
+    "name": "command",
+    "version": "1.0.0",
+    "author": "uphy",
+    "license": "Apache-2.0",
+    "scripts": {
+        "seed": "firestore-seed"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "firestore-seed": "^0.0.10"
+    },
+    "firestore-seed": {
+        "databaseURL": "https://xxxxxxx.firebaseio.com",
+        "credentialPath": "../serviceAccountKey.json",
+        "seedDataPath": "./firestore-seed.js"
+    }
+}
