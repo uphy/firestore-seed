@@ -22,7 +22,7 @@ const seed = require('firestore-seed');
 
 // Initialize firebase-admin.
 admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+    credential: admin.credential.cert(serviceAccountKey),
     databaseURL: "https://xxxxxx.firebaseio.com",
     storageBucket: "xxxxxx.appspot.com",
 });
