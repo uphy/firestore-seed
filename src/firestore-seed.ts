@@ -11,6 +11,7 @@ interface Config {
     databaseURL: string
     credentialPath?: string
     seedDataPath?: string
+    storageBucketPath?: string
 }
 
 const cwd = process.cwd();
@@ -45,7 +46,8 @@ if (config.databaseURL === undefined) {
 
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
-        databaseURL: config.databaseURL
+        databaseURL: config.databaseURL,
+        storageBucket: config.storageBucketPath,
     });
 
     const seedDataRaw = (await import(seedDataPath)).default;
